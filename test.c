@@ -6,13 +6,13 @@
 #include <pthread.h>
 
 #define NUM_THREADS 4
-#define NUM_REQUESTS 5 // Reduced number of requests
+#define NUM_REQUESTS 3 // Adjust the number of requests for visibility
 #define HOST "localhost"
 #define PORT 8080
 #define REQUEST "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
 
 void waste_time() {
-    for (volatile int i = 0; i < 1000000000; ++i); // Increased workload
+    for (volatile int i = 0; i < 10000000; ++i);
 }
 
 void make_request() {
@@ -48,6 +48,9 @@ void make_request() {
         return;
     }
 
+    // Simulate network delay
+    sleep(2);
+
     // Read response
     while ((n = read(sockfd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[n] = '\0';  // Null-terminate the buffer
@@ -66,6 +69,7 @@ void *compute_and_request(void *arg) {
     for (int i = 0; i < NUM_REQUESTS; ++i) {
         waste_time();
         make_request();
+        sleep(1); // Introduce additional delay for differentiation
     }
     return NULL;
 }
