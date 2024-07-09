@@ -6,15 +6,17 @@
 #include <pthread.h>
 
 #define NUM_THREADS 4
-#define NUM_REQUESTS 3 // Adjust the number of requests for visibility
+#define NUM_REQUESTS 20 // Increased number of requests
 #define HOST "localhost"
 #define PORT 8080
 #define REQUEST "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
 
-void waste_time() {
-    for (volatile int i = 0; i < 10000000; ++i);
+// Function to simulate CPU-intensive work
+void intensive_cpu_task() {
+    for (volatile int i = 0; i < 1000000000; ++i);
 }
 
+// Function to make an HTTP request
 void make_request() {
     int sockfd;
     struct sockaddr_in server_addr;
@@ -48,9 +50,6 @@ void make_request() {
         return;
     }
 
-    // Simulate network delay
-    sleep(2);
-
     // Read response
     while ((n = read(sockfd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[n] = '\0';  // Null-terminate the buffer
@@ -65,11 +64,11 @@ void make_request() {
     close(sockfd);
 }
 
-void *compute_and_request(void *arg) {
+// Thread function to run CPU and I/O tasks
+void *cpu_and_io_task(void *arg) {
     for (int i = 0; i < NUM_REQUESTS; ++i) {
-        waste_time();
+        intensive_cpu_task();
         make_request();
-        sleep(1); // Introduce additional delay for differentiation
     }
     return NULL;
 }
@@ -77,7 +76,7 @@ void *compute_and_request(void *arg) {
 int main(void) {
     pthread_t threads[NUM_THREADS];
     for (int i = 0; i < NUM_THREADS; ++i) {
-        pthread_create(&threads[i], NULL, compute_and_request, NULL);
+        pthread_create(&threads[i], NULL, cpu_and_io_task, NULL);
     }
 
     for (int i = 0; i < NUM_THREADS; ++i) {
